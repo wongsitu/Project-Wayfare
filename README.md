@@ -1,4 +1,4 @@
-# React: JWT Authentication
+# React: Authentication with JWTs
 
 ## Learning Objectives (5 min / 0:05)
 - Describe JSON web tokens (JWTs)
@@ -15,13 +15,13 @@ In other words: A JSON web token is JSON-formatted data sent securely between th
 
 ### Authentication with JWTs
 
-The problem: HTTP is stateless, but we need a way to tell the server that a user is logged in.
+The problem that JWTs seek to overcome: HTTP is stateless, but we need a way to tell the server that a user is logged in.
 
 When making requests or performing actions that are only for authorized users, there needs to be a way to keep track of whether a user is logged in, since that information isn't stored in HTTP by nature. 
 
-For instance, when we implemented Passport for user authentication, we used sessions to remind the server of "logged-in status" with every request made to the server. A session is a place to store data on the browser during one request that you can read during later requests. The session in JS is an object that allows us to keep track of this information. When a new user signs into an application, we create a new session in Express. This is sent in a response back to the browser. In future HTTP requests from the browser, the client sends a session cookie to the server to retrieve the user from the database to then authenticate the authorized interaction with the database (e.g. saving a post, editing data).
+For instance, when we implemented Passport for user authentication, we used sessions to remind the server of "logged-in status" with every request made to the server. A session is a place to store data on the browser during one request which can be read during later requests. The session is a JS object that allows us to keep track of this information. When a new user signs into an application, we create a new session in the server, and a cookie for this session is sent in a response back to the browser. In future HTTP requests from the browser, the client sends a session cookie to the server to retrieve the user from the database to then authenticate the authorized interaction with the database (e.g. saving a post, editing data).
 
-Another approach to keeping track of a user being logged in is to use JWTs with Passport. With JWTs, the user info is embedded in a token. Upon initial log in, the server creates a JSON "token" to store the user info. These tokens are "signed" by the server to secure it from being read publicly while sent back and forth between the browser and server. The server holds the private key to read the token.
+Another approach to keeping track of a user being logged in is to use JWTs with Passport. With JWTs, the user info is embedded in a token. Upon initial log in, the server creates a JSON "token" to store the user info. These tokens are "signed" by the server, and only the server holds the private key to read the token.
 
 #### How It Works
 
@@ -29,16 +29,15 @@ Another approach to keeping track of a user being logged in is to use JWTs with 
 
 1. Client browser makes a request sending user login credentials and password (only has to do this once)
 2. Server validates the credentials and sends a JSON response to the client that encodes user login data
-3. Client stores this JSON token
-4. When the client sends a request to a route that requires authentication, it will send this token to the API to authenticate its authorization for access
+3. Client stores this JSON web token
+4. When the client sends a request to a route that requires authentication, it will send this token to the API to present its authorization for access
 
 #### Advantages of using JWTs:
 
 - JWTs are self-contained
-    - You have all the information about the user within the token. After inital request from browser, server doesn't need to interact with DB to know who the user is. This allows you to limit database lookups.
+    - You have all the information about the user within the token. After inital request from browser, the server doesn't need to interact with the database to know who the user is. Using JWTs limit database lookups.
 - JWTs are compact, and transmission through HTTP actions is fast.
-- JSON parsers are common in programming languages, so the information is more easily accessible than other options like Security Assertion Markup Language Tokens (SAML).
-- It works the same for browser clients and native mobile apps.
+- JWTs work the same for browser clients and native mobile apps.
 
 ### What does a JWT look like?
 
@@ -99,9 +98,9 @@ Encoded string vs. decoded JSON:
 
 ### Using JWTs with Passport in a MERN app
 
-Passport allows you to store the user object in request instead of in sessions. Upon the log in request, the server will create a token and pass it to the browser in the HTTP response. The token is saved to local storage.
+Passport allows you to store the user object in requests instead of in session cookies. Upon the log-in request, the server will create a token and pass it to the browser in the HTTP response. The token is saved to local storage in the browser.
 
-When the user wants to access a route that requires authorization, the client will send a JWT with the request to the server. Since the server has the secret key to decode the JWT, it can (a) verify that the JWT has the right signature to ensure that the JWT originally came from that server, and (b) verify the user and then perform the action.
+When the user wants to access a route that requires authorization, the client will send a JWT with the request to the server. Since the server has the secret key to decode the JWT, it can (a) verify that the JWT has the right signature to ensure that the JWT originally came from that server, and (b) verify the user and then perform the action that needed authorization.
 
 ### Additional Resources on JWTs:
 - https://medium.com/vandium-software/5-easy-steps-to-understanding-json-web-tokens-jwt-1164c0adfcec
@@ -115,13 +114,14 @@ Start out by cloning the repo for 'Walk It Out' api:
 
 ```
 $ git clone git@git.generalassemb.ly:ga-wdi-lessons/walk-it-out-back-end.git
+$ npm install
 ```
 
 Take 10 min to review the starter code. Look for:
 
 - models
 - controllers
-- what kinds of routes exists (CRUD?)
+- CRUD functionality?
 
 # Break (0:10 / 0:50)
 
@@ -129,11 +129,10 @@ Take 10 min to review the starter code. Look for:
 
 ```
 $ mkdir config
-$ touch config/config.js
-$ touch config/passport.js
+$ touch config/config.js config/passport.jsp
 ```
 
-The config directory is where we are going to put all the code to build out passport and our JWTs. It will look a little bit different than we did it before.
+The config directory is where we are going to put all the code to build out passport and our JWTs. It will look a little bit different than the passport we built out before.
 
 To start, we need to install a few dependencies:
 
@@ -155,11 +154,11 @@ module.exports = {
 Then, we will build out passport. First in `index.js`:
 
 ```
-const passport = require('./config/passport')();
+const passport = require('./config/passport')()
 
 ...
 
-app.use(passport.initialize());
+app.use(passport.initialize())
 ```
 
 In `passport.js`:
@@ -207,7 +206,14 @@ module.exports = function() {
 
 In order to log in (or sign up), we'll need to make post requests to the server to find (or create) the user in the database and create a JWT to represent the user is logged in. We can manage these requests in a user controller.
 
-In `app.js`: 
+
+Then, we'll make a user controller file in the command line:
+
+```
+$ touch controllers/users.js
+```
+
+In `index.js`: 
 
 ```
 const userController = require('./controllers/users.js')
@@ -217,11 +223,16 @@ const userController = require('./controllers/users.js')
 app.use('/users', userController)
 ```
 
-Then, we'll make a user controller file in the command line:
+In `users.js`, we will start out like a typical controller:
 
 ```
-$ touch controllers/users.js
+const express = require('express')
+const router = express.Router()
+
+
+module.exports = router
 ```
+
 
 Then we will to install another dependency:
 
@@ -229,18 +240,8 @@ Then we will to install another dependency:
 $ npm install jwt-simple
 ```
 
-In `users.js`, we will start out like a typical controller:
 
-```
-const express = require('express')
-const router = express.Router()
-
-...
-
-module.exports = router
-```
-
-Then, we'll require a dependency for JWTs:
+Then, we'll require that in `users.js`:
 
 ```
 const jwt = require('jwt-simple')
@@ -270,7 +271,7 @@ We will begin creating routes for requests made from the browser. First, we will
 - Generate a JWT holding the user id
 - Send the JWT back to the browser
 
-To accomplish this, in `users.js`:
+In `users.js`:
 
 ```
 router.post('/signup', (req, res) => {
@@ -308,7 +309,7 @@ router.post('/signup', (req, res) => {
 
 #### Testing Sign Up with Postman (0:05 / 1:35)
 
-To verify that this post request will work, let's use our nifty tool, Postman.
+To verify that this post request will work, let's use our nifty tool, Postman. Start up the server with `nodemon`.
 
 In Postman:
 
@@ -400,15 +401,20 @@ Once again, you should see a JSON object with a token value sent in a response.
 
 Clone down [this repository](https://git.generalassemb.ly/ga-wdi-lessons/react-walk-it-out-front-end) for the front-end of `Walk It Out`.
 
+```
+$ git clone git@git.generalassemb.ly:ga-wdi-lessons/react-walk-it-out-front-end.git
+$ npm install
+```
+
 Take 5 minutes to review the starter code. Look through:
 
 - components
 - any API calls
 - forms
 
-#### Sign Up
+#### Sign Up (10 min / 2:25)
 
-When you go to the starter code in the `SignUpForm.js` component, you'll see that the form input fields fire off a few different methods. When the methods start with `this.props...`, you know the methods has been passed through from the parent component (in this case, `App.js`).
+When you go to the starter code in the `SignUpForm.js` component, you'll see that the form input fields fire off a few different methods. When the methods start with `this.props...`, you know the methods have been passed through from the parent component (in this case, `App.js`).
 
 In `App.js`, the method for `handleInput` is already defined.
 
@@ -456,13 +462,14 @@ In `LogOut.js`, you'll see a form firing `this.props.handleLogOut`. To give this
 
 This sets the email and password properties in state back to empty strings, changes the state `isLoggedIn` property to false, and clears the localStorage of JWTs.
 
-#### Log In
+#### Log In (5 min / 2:30)
 
 The final functionality we need is the ability to log in. In the `LogInForm.js` component, there is a form that uses `handleInput` (already written) and `handleLogIn` (needs to be written) methods in the parent component.
 
-In `App.js`, fill out the `handleLogIn` component with:
+In `App.js`, fill out the `handleLogIn` method with:
 
 ```
+  handleLogIn(e) {
     e.preventDefault()
     axios.post('http://localhost:3001/users/login', {
         email: this.state.email,
@@ -475,6 +482,7 @@ In `App.js`, fill out the `handleLogIn` component with:
             })
         })
         .catch(err => console.log(err))
+  }
 ```
 
 As written in the back-end code, this has the server verify the user information with the database and creates a JWT token to be passed back to the browser, which is then stored in localStorage.
@@ -487,3 +495,4 @@ Your app now has functionality to sign up, log out, and log in, using passport a
 - https://hptechblogs.com/using-json-web-token-react/
 - https://blog.jscrambler.com/implementing-jwt-using-passport/
 - [FAQs: Authentication with tokens (vs cookies)](https://auth0.com/blog/ten-things-you-should-know-about-tokens-and-cookies/#token-oauth)
+- [Using bcrypt](https://jonathas.com/token-based-authentication-in-nodejs-with-passport-jwt-and-bcrypt/)
