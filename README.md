@@ -129,7 +129,7 @@ Take 10 min to review the starter code. Look for:
 
 ```
 $ mkdir config
-$ touch config/config.js config/passport.jsp
+$ touch config/config.js config/passport.js
 ```
 
 The config directory is where we are going to put all the code to build out passport and our JWTs. It will look a little bit different than the passport we built out before.
