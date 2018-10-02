@@ -51,7 +51,7 @@ A string with three parts, each separated by dots (`.`):
 
 **Header** is a JSON object consisting of two parts: the type of token (typ) and the hashing algorithm being used on the token (alg).
 
-```
+```js
 Header example:
 {
   "alg": "HS256",
@@ -63,7 +63,7 @@ Header example:
 
 **Payload** is a JSON object containing claims. Claims refer to statements about an entity (e.g. user data). You can put as many claims into the payload as you want, though you want to be cognizant of keeping the JWT compact so as not to impact performance of HTTP actions.
 
-```
+```js
 Payload example:
 {
   "sub": "1234567890",
@@ -111,7 +111,7 @@ When the user wants to access a route that requires authorization, the client wi
 
 Start out by cloning the repo for 'Walk It Out' api:
 
-```
+```bash
 $ git clone https://git.generalassemb.ly/SF-WDI/walk-it-out-back-end
 $ cd walk-it-out-back-end
 $ npm i
@@ -126,7 +126,7 @@ Take 10 min to review the starter code. Look for:
 
 ### Config Directory
 
-```
+```bash
 $ mkdir config
 $ touch config/config.js config/passport.js
 ```
@@ -135,13 +135,13 @@ The config directory is where we are going to put all the code to build out pass
 
 To start, we need to install a few dependencies:
 
-```
-$ npm install passport passport-jwt
+```bash
+$ npm i passport passport-jwt
 ```
 
 In `config.js`, we'll create a secret key for our JWTs:
 
-```
+```javascript
 module.exports = {  
     jwtSecret: 'JwtS3cr3tK3Y',
     jwtSession: {
@@ -152,7 +152,7 @@ module.exports = {
 
 Then, we will build out passport. First in `index.js`:
 
-```
+```javascript
 const passport = require('./config/passport')()
 
 ...
@@ -162,18 +162,18 @@ app.use(passport.initialize())
 
 In `passport.js`:
 
-```
-var passport = require('passport')
-var passportJWT = require('passport-jwt')
-var ExtractJwt = passportJWT.ExtractJwt
-var Strategy = passportJWT.Strategy 
+```javascript
+const passport = require('passport')
+const passportJWT = require('passport-jwt')
+const ExtractJwt = passportJWT.ExtractJwt
+const Strategy = passportJWT.Strategy 
 
-var config = require('./config')
+const config = require('./config')
 
 const mongoose = require('../models/User')
 const User = mongoose.model('User')
 
-var params = {  
+const params = {  
     secretOrKey: config.jwtSecret,
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()
 }
@@ -208,13 +208,13 @@ In order to log in (or sign up), we'll need to make post requests to the server 
 
 Then, we'll make a user controller file in the command line:
 
-```
+```bash
 $ touch controllers/users.js
 ```
 
 In `index.js`: 
 
-```
+```javascript
 const userController = require('./controllers/users.js')
 
 ...
@@ -224,7 +224,7 @@ app.use('/users', userController)
 
 In `users.js`, we will start out like a typical controller:
 
-```
+```javascript
 const express = require('express')
 const router = express.Router()
 
@@ -235,27 +235,27 @@ module.exports = router
 
 Then we will to install another dependency:
 
-```
-$ npm install jwt-simple
+```bash
+$ npm i jwt-simple
 ```
 
 
 Then, we'll require that in `users.js`:
 
-```
+```javascript
 const jwt = require('jwt-simple')
 ```
 
 We want to bring in the passport and JWT built out in config:
 
-```
+```javascript
 const passport = require('../config/passport')
 const config = require('../config/config')
 ```
 
-In order to query the database for users and create new users, we'll need to require the User schema built out in the models folder:
+In order to query the database for users and create new users, we'll need to require the `User` schema built out in the models folder:
 
-```
+```javascript
 const mongoose = require('../models/User')
 const User = mongoose.model('User')
 ```
@@ -272,37 +272,33 @@ We will begin creating routes for requests made from the browser. First, we will
 
 In `users.js`:
 
-```
+```javascript
 router.post('/signup', (req, res) => {
-    if (req.body.email && req.body.password) {
-        let newUser = {
-            email: req.body.email,
-            password: req.body.password
-        }
-        User.findOne({email: req.body.email})
-            .then((user) => {
-                if (!user) {
-                    User.create(newUser)
-                        .then(user => {
-                            if (user) {
-                                var payload = {
-                                    id: newUser.id
-                                }
-                                var token = jwt.encode(payload, config.jwtSecret)
-                                res.json({
-                                    token: token
-                                })
-                            } else {
-                                res.sendStatus(401)
-                            } 
-                        })
-                } else {
-                    res.sendStatus(401)
-                }
-            })
-    } else {
-        res.sendStatus(401)
+  if (req.body.email && req.body.password) {
+    let newUser = {
+      email: req.body.email,
+      password: req.body.password
     }
+    User.findOne({ email: req.body.email })
+      .then((user) => {
+        if (!user) {
+          User.create(newUser)
+            .then(user => {
+              if (user) {
+                let payload = { id: newUser.id }
+                let token = jwt.encode(payload, config.jwtSecret)
+                res.json({ token })
+              } else {
+                res.sendStatus(401)
+              }
+            })
+        } else {
+          res.sendStatus(401)
+        }
+      })
+  } else {
+    res.sendStatus(401)
+  }
 })
 ```
 
@@ -312,7 +308,7 @@ To verify that this post request will work, let's use our nifty tool, Postman. S
 
 In Postman:
 
-- Uhoose POST verb
+- Choose POST verb
 - Url: `http://localhost:3001/users/signup`
 - Headers: 
     - Key: 'Content-Type'
@@ -320,7 +316,7 @@ In Postman:
 - Body:
     - Raw
     - JSON (application/json)
-    - ```
+    - ```js
         {
             "email": "meg@email.com",
             "password": "meg123"
@@ -344,36 +340,32 @@ In the user controller, we will create a method to handle `post` requests to cre
 
 In `/controllers/users.js`:
 
-```
+```js
 router.post('/login', (req, res) => {
-    if (req.body.email && req.body.password) {
-    User.findOne({email: req.body.email}).then(user => {
-        if (user) {
-            if (user.password === req.body.password) {
-                var payload = {
-                    id: user.id
-                }
-                var token = jwt.encode(payload, config.jwtSecret)
-                res.json({
-                    token: token
-                })
-            } else {
-                res.sendStatus(401)
-            }
+  if (req.body.email && req.body.password) {
+    User.findOne({ email: req.body.email }).then(user => {
+      if (user) {
+        if (user.password === req.body.password) {
+          let payload = { id: user.id }
+          let token = jwt.encode(payload, config.jwtSecret)
+          res.json({ token })
         } else {
-            res.sendStatus(401)
-        } 
-    })
-    } else {
+          res.sendStatus(401)
+        }
+      } else {
         res.sendStatus(401)
-    }
+      }
+    })
+  } else {
+    res.sendStatus(401)
+  }
 })
 ```
 
 #### Testing Log In with Postman 
 In Postman:
 
-- Uhoose POST verb
+- Choose POST verb
 - Url: `http://localhost:3001/users/login`
 - Headers: 
     - Key: 'Content-Type'
@@ -381,7 +373,7 @@ In Postman:
 - Body:
     - Raw
     - JSON (application/json)
-    - ```
+    - ```js
         {
             "email": "meg@email.com",
             "password": "meg123"
@@ -396,10 +388,9 @@ Once again, you should see a JSON object with a token value sent in a response.
 
 #### Starter Code 
 
-Clone down [this repository](https://git.generalassemb.ly/SF-WDI/react-walk-it-out-front-end.git) for the front-end of `Walk It Out`.
+Clone down [this repository](https://git.generalassemb.ly/SF-WDI/react-walk-it-out-front-end.git) for the front-end of `Walk It Out`. **(Make sure you're out of the back end repo!)**
 
-```
-$ cd ..
+```bash
 $ git clone https://git.generalassemb.ly/SF-WDI/react-walk-it-out-front-end.git
 $ cd react-walk-it-out-front-end
 $ npm i
@@ -413,14 +404,14 @@ Take 5 minutes to review the starter code. Look through:
 
 #### Sign Up 
 
-When you go to the starter code in the `SignUpForm.js` component, you'll see that the form input fields fire off a few different methods. When the methods start with `this.props...`, you know the methods have been passed through from the parent component (in this case, `App.js`).
+When you go to the starter code in the `SignUpForm.js` component, you'll see that the form input fields fire off a few different methods. When the methods start with `this.props.` you know the methods have been passed through from the parent component (in this case, `App.js`).
 
 In `App.js`, the method for `handleInput` is already defined.
 
 Next we need to code functionality for the `handleSignUp` method. Given that this form is taking user input to be put into the database, we'll want to make an `axios` request to the server. In `App.js` in `handleSignUp`:
 
 ```javascript
-  handleSignUp(e) {
+  handleSignUp = (e) => {
     e.preventDefault()
     axios.post('http://localhost:3001/users/signup', 
 			{ email: this.state.email,
@@ -449,7 +440,7 @@ When you've gained the ability to sign up, you'll want to incorporate logging ou
 In `LogOut.js`, you'll see a form firing `this.props.handleLogOut`. To give this method functionality, fill in the `handleLogOut` method in `App.js`:
 
 ```javascript
-const handleLogOut = () => {
+handleLogOut = () => {
   this.setState({
     email: '',
     password: '',
@@ -468,7 +459,7 @@ The final functionality we need is the
 In `App.js`, fill out the `handleLogIn` method with:
 
 ```javascript
-const handleLogIn = (e) => {
+handleLogIn = (e) => {
 	e.preventDefault()
 	axios.post('http://localhost:3001/users/login', {
 		email: this.state.email,
