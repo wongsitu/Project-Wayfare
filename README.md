@@ -1,11 +1,11 @@
 # React: Authentication with JWTs
 
-## Learning Objectives (5 min / 0:05)
+## Learning Objectives
 - Describe JSON web tokens (JWTs)
 - Identify parts of JWTs
 - Add JWT authentication with Passport to a MERN app
 
-## Framing (20 min / 0:25)
+## Framing
 
 ### What is a JSON Web Token?
 
@@ -108,13 +108,13 @@ When the user wants to access a route that requires authorization, the client wi
 
 ## We Do: Implementing Authentication with JWT
 
-### Starter Code (15 min / 0:40)
 
 Start out by cloning the repo for 'Walk It Out' api:
 
 ```
-$ git clone git@git.generalassemb.ly:ga-wdi-lessons/walk-it-out-back-end.git
-$ npm install
+$ git clone https://git.generalassemb.ly/SF-WDI/walk-it-out-back-end
+$ cd walk-it-out-back-end
+$ npm i
 ```
 
 Take 10 min to review the starter code. Look for:
@@ -123,9 +123,8 @@ Take 10 min to review the starter code. Look for:
 - controllers
 - CRUD functionality?
 
-# Break (0:10 / 0:50)
 
-### Config Directory (0:20 / 1:10)
+### Config Directory
 
 ```
 $ mkdir config
@@ -202,7 +201,7 @@ module.exports = function() {
 }
 ```
 
-### User Controller (0:20 / 1:30)
+### User Controller
 
 In order to log in (or sign up), we'll need to make post requests to the server to find (or create) the user in the database and create a JWT to represent the user is logged in. We can manage these requests in a user controller.
 
@@ -307,7 +306,7 @@ router.post('/signup', (req, res) => {
 })
 ```
 
-#### Testing Sign Up with Postman (0:05 / 1:35)
+#### Testing Sign Up with Postman 
 
 To verify that this post request will work, let's use our nifty tool, Postman. Start up the server with `nodemon`.
 
@@ -332,9 +331,8 @@ Hit "SEND"!
 
 Then, scroll down to see the server response. You should see a JSON object with a token value.
 
-# Break (0:10 / 1:45)
 
-#### Log In (0:15 / 2:00)
+#### Log In
 
 In the user controller, we will create a method to handle `post` requests to create a token when a user logs in. It will:
 
@@ -372,8 +370,7 @@ router.post('/login', (req, res) => {
 })
 ```
 
-#### Testing Log In with Postman (0:05 / 2:05)
-
+#### Testing Log In with Postman 
 In Postman:
 
 - Uhoose POST verb
@@ -397,13 +394,15 @@ Once again, you should see a JSON object with a token value sent in a response.
 
 ### Front End: Log In and Sign Up
 
-#### Starter Code (10 min / 2:15)
+#### Starter Code 
 
-Clone down [this repository](https://git.generalassemb.ly/ga-wdi-lessons/react-walk-it-out-front-end) for the front-end of `Walk It Out`.
+Clone down [this repository](https://git.generalassemb.ly/SF-WDI/react-walk-it-out-front-end.git) for the front-end of `Walk It Out`.
 
 ```
-$ git clone git@git.generalassemb.ly:ga-wdi-lessons/react-walk-it-out-front-end.git
-$ npm install
+$ cd ..
+$ git clone https://git.generalassemb.ly/SF-WDI/react-walk-it-out-front-end.git
+$ cd react-walk-it-out-front-end
+$ npm i
 ```
 
 Take 5 minutes to review the starter code. Look through:
@@ -412,7 +411,7 @@ Take 5 minutes to review the starter code. Look through:
 - any API calls
 - forms
 
-#### Sign Up (10 min / 2:25)
+#### Sign Up 
 
 When you go to the starter code in the `SignUpForm.js` component, you'll see that the form input fields fire off a few different methods. When the methods start with `this.props...`, you know the methods have been passed through from the parent component (in this case, `App.js`).
 
@@ -420,20 +419,20 @@ In `App.js`, the method for `handleInput` is already defined.
 
 Next we need to code functionality for the `handleSignUp` method. Given that this form is taking user input to be put into the database, we'll want to make an `axios` request to the server. In `App.js` in `handleSignUp`:
 
-```
+```javascript
   handleSignUp(e) {
-      e.preventDefault()
-      axios.post('http://localhost:3001/users/signup', {
-          email: this.state.email,
-          password: this.state.password
-        })
-          .then(response => {
-              localStorage.token = response.data.token
-              this.setState({
-                  isLoggedIn: true
-              })
+    e.preventDefault()
+    axios.post('http://localhost:3001/users/signup', 
+			{ email: this.state.email,
+      	password: this.state.password }
+			)
+      .then( response => {
+        localStorage.token = response.data.token
+          this.setState({
+            isLoggedIn: true
           })
-          .catch(err => console.log(err))
+      })
+      .catch(err => console.log(err))
   }
 ```
 
@@ -449,40 +448,40 @@ When you've gained the ability to sign up, you'll want to incorporate logging ou
 
 In `LogOut.js`, you'll see a form firing `this.props.handleLogOut`. To give this method functionality, fill in the `handleLogOut` method in `App.js`:
 
-```
-  handleLogOut() {
-    this.setState({
-      email: '',
-      password: '',
-      isLoggedIn: false
-    })
-    localStorage.clear()
-  }
+```javascript
+const handleLogOut = () => {
+  this.setState({
+    email: '',
+    password: '',
+    isLoggedIn: false
+  })
+  localStorage.clear()
+}
 ```
 
 This sets the email and password properties in state back to empty strings, changes the state `isLoggedIn` property to false, and clears the localStorage of JWTs.
 
-#### Log In (5 min / 2:30)
-
-The final functionality we need is the ability to log in. In the `LogInForm.js` component, there is a form that uses `handleInput` (already written) and `handleLogIn` (needs to be written) methods in the parent component.
+#### Log In 
+The final functionality we need is the
+ ability to log in. In the `LogInForm.js` component, there is a form that uses `handleInput` (already written) and `handleLogIn` (needs to be written) methods in the parent component.
 
 In `App.js`, fill out the `handleLogIn` method with:
 
-```
-  handleLogIn(e) {
-    e.preventDefault()
-    axios.post('http://localhost:3001/users/login', {
-        email: this.state.email,
-        password: this.state.password
-      })
-        .then(response => {
-            localStorage.token = response.data.token
-            this.setState({
-              isLoggedIn: true
-            })
-        })
-        .catch(err => console.log(err))
-  }
+```javascript
+const handleLogIn = (e) => {
+	e.preventDefault()
+	axios.post('http://localhost:3001/users/login', {
+		email: this.state.email,
+		password: this.state.password
+	})
+	.then( response => {
+		localStorage.token = response.data.token
+		this.setState({
+			isLoggedIn: true
+		})
+	})
+	.catch(err => console.log(err))
+}
 ```
 
 As written in the back-end code, this has the server verify the user information with the database and creates a JWT token to be passed back to the browser, which is then stored in localStorage.
